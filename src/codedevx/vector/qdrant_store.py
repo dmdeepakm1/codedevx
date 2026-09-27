@@ -34,3 +34,23 @@ class QdrantCodeStore:
             return []
         hits=self.q.query_points(collection_name=self.collection,query=vector,query_filter=models.Filter(must=[models.FieldCondition(key="project_id",match=models.MatchValue(value=project_id))]),limit=limit,with_payload=True).points
         return [{"score":h.score,**(h.payload or {})} for h in hits]
+
+
+    def upsert_knowledge(self, chunks):
+        if not chunks:
+            return
+        texts=[f"{c.source}\n{c.title}\n{c.content}" for c in chunks]
+        vectors=self._embed(texts)
+        self._ensure(len(vectors[0]))
+        import uuid
+        points=[]
+        for c,v in zip(chunks,vectors):
+            points.append(models.PointStruct(
+                id=str(uuid.uuid5(uuid.NAMESPACE_URL,c.stable_id)),
+                vector=v,
+                payload={"stable_id":c.stable_id,"project_id":c.project_id,"repo_id":"knowledge",
+                         "path":c.source_id,"language":"knowledge","symbol":c.title,
+                         "start_line":1,"end_line":1,"content":c.content,
+                         "content_hash":c.stable_id,"source":c.source,"url":c.url}
+            ))
+        self.q.upsert(collection_name=self.collection,points=points)
