@@ -805,3 +805,11 @@ The repository's default credentials and compose configuration are intended for 
 This README was updated against the current files in the GitHub repository, including the active configuration, dependencies, V1/V2/V3 profile logic, hybrid retriever, Neo4j adapter, Markdown knowledge ingestion, Ollama provider, MCP server and V3 workspace tools.
 
 It intentionally separates **implemented**, **partial**, and **planned** capabilities so future work is not mistaken for working functionality.
+
+## V1 repository discovery and context budget
+
+Repository language, framework and build information is detected from tracked source files and build manifests during `codedevx index`. The profile is stored in PostgreSQL and shown in index output or with `codedevx repo-profile PROJECT_ID`. Detection is heuristic; a Java build file alone does not establish every framework in use.
+
+An optional `codedevx.yaml` at each repository root can add hints and exclude paths. Copy [`codedevx.example.yaml`](codedevx.example.yaml) and edit it for that repository. Hints supplement detection; mismatches appear as warnings, so they are not silently treated as facts. Untracked files are not discovered by the Git indexer. Commit spec edits before reindexing; the spec is re-read on every `index` call even without a source SHA change.
+
+`CODEDEVX_MAX_CONTEXT_TOKENS` defaults to 20000, and `CODEDEVX_MAX_CONTEXT_CHUNKS` defaults to 24. The V1 context builder ranks retrieved chunks by similarity, keeps file and line citations, and allocates estimated tokens to architecture knowledge, source and tests. It does not send the whole repository to the model. The token estimate is conservative and provider-neutral, not an exact billing count. Retrieved code is line chunked and semantic; this version does not prove complete cross-repository call tracing. A large requirement is rejected when it exceeds its reserved budget.

@@ -1,7 +1,11 @@
-from sqlalchemy import create_engine, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+import json
+
+from sqlalchemy import String, Text, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+
 from codedevx.config import settings
-from codedevx.domain import Repository, RepoKind
+from codedevx.domain import RepoKind, Repository
+
 
 class Base(DeclarativeBase):
     pass
@@ -17,6 +21,12 @@ class RepositoryRow(Base):
     path: Mapped[str] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(String(30))
     indexed_sha: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
+class RepositoryProfileRow(Base):
+    __tablename__ = "repository_profiles"
+    project_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    repo_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    profile_json: Mapped[str] = mapped_column(Text)
 
 class ChunkStateRow(Base):
     __tablename__ = "chunk_state"
@@ -78,3 +88,18 @@ def set_hash(project_id: str, repo_id: str, stable_id: str, content_hash: str):
         else:
             s.add(ChunkStateRow(project_id=project_id, repo_id=repo_id, stable_id=stable_id, content_hash=content_hash))
         s.commit()
+
+def set_repository_profile(project_id: str, repo_id: str, profile: dict):
+    init_db()
+    with Session(engine) as session:
+        row = session.get(RepositoryProfileRow, (project_id, repo_id))
+        if row is None:
+            row = RepositoryProfileRow(project_id=project_id, repo_id=repo_id)
+            session.add(row)
+        row.profile_json = json.dumps(profile)
+        session.commit()
+
+def profiles_for_project(project_id: str) -> list[dict]:
+    init_db()
+    with Session(engine) as session:
+        return [json.loads(row.profile_json) for row in session.query(RepositoryProfileRow).filter_by(project_id=project_id).all()]

@@ -1,0 +1,13 @@
+# Optional: copy to codedevx.yaml in a repository root.
+version: 1
+repository:
+  name: example-service
+technology:
+  languages: [java]
+  frameworks: [spring-boot]
+  build:
+    tool: maven
+analysis:
+  exclude:
+    - generated/**
+    - target/**

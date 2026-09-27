@@ -1,7 +1,9 @@
 from codedevx.config import settings
+from codedevx.context import ContextBudget, estimate_tokens, evidence_context
 from codedevx.llm.router import ProviderRouter
-from codedevx.vector.qdrant_store import QdrantCodeStore
 from codedevx.retrieval.hybrid import HybridRetriever
+from codedevx.storage.sql import profiles_for_project
+from codedevx.vector.qdrant_store import QdrantCodeStore
 
 SYSTEM="""You are CodeDevX, an engineering assistant.
 Use supplied evidence for claims about the project. Cite repository/file locations from context.
@@ -22,10 +24,11 @@ class EngineeringAgent:
         else:
             hits=self.vector.search(project_id,question,settings.max_context_chunks)
             graph=[]
-        context=[]
-        for h in hits:
-            context.append(f"SOURCE: {h.get('repo_id')}\nPATH: {h.get('path')}:{h.get('start_line')}-{h.get('end_line')}\nSYMBOL/TITLE: {h.get('symbol')}\nCONTENT:\n{h.get('content')}")
-        if graph:
-            context.append("GRAPH EVIDENCE:\n"+str(graph))
-        prompt=f"PROFILE: V{settings.version}\nPROJECT: {project_id}\nQUESTION:\n{question}\n\nEVIDENCE:\n"+("\n\n---\n\n".join(context) or "[none]")
+        profiles=profiles_for_project(project_id)
+        budget=ContextBudget(max_tokens=settings.max_context_tokens)
+        header=f"PROFILE: V{settings.version}\nPROJECT: {project_id}\nQUESTION:\n{question}\n\nEVIDENCE:\n"
+        if estimate_tokens(header) > min(budget.requirement, budget.max_tokens):
+            raise ValueError("Question exceeds configured requirement/context token budget")
+        context=evidence_context(hits,graph,profiles,budget,estimate_tokens(header)+estimate_tokens(SYSTEM))
+        prompt=header+context
         return self.router.provider(provider).generate(SYSTEM,prompt).text

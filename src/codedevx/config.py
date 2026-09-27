@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     postgres_url:str="postgresql+psycopg://codedevx:codedevx@localhost:5432/codedevx"
     qdrant_url:str="http://localhost:6333"
     qdrant_collection:str="codedevx_code"
-    max_context_chunks:int=12
+    max_context_chunks:int=24
+    max_context_tokens:int=20000
     graph_enabled:bool=False
     strict_integrations:bool=False
     neo4j_uri:str="bolt://localhost:7687"

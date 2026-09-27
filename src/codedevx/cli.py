@@ -9,6 +9,8 @@ from codedevx.knowledge.markdown import load_markdown
 from codedevx.vector.qdrant_store import QdrantCodeStore
 from codedevx.config import settings
 from codedevx.design import DesignAssistant, DesignStage
+from codedevx.repository_profile import load_profile
+from codedevx.storage.sql import repos_for_project
 
 app=typer.Typer(no_args_is_help=True)
 
@@ -25,6 +27,11 @@ def repo_add(project_id: str, repo_id: str, path: str, kind: RepoKind=RepoKind.U
     add_project(project_id)
     add_repo(Repository(project_id,repo_id,str(p),kind))
     typer.echo(f"Repository registered: {project_id}/{repo_id}")
+
+@app.command("repo-profile")
+def repo_profile(project_id: str):
+    """Show detected technology and optional codedevx.yaml hints."""
+    typer.echo(json.dumps({repo.id:load_profile(repo.path,repo.id).as_dict() for repo in repos_for_project(project_id)},indent=2))
 
 @app.command("index")
 def index(project_id: str):
