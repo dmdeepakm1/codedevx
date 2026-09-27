@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:17
+    environment:
+      POSTGRES_USER: codedevx
+      POSTGRES_PASSWORD: codedevx
+      POSTGRES_DB: codedevx
+    ports:
+      - "5432:5432"
+    volumes:
+      - codedevx_pg:/var/lib/postgresql/data
+
+  qdrant:
+    image: docker.io/qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - codedevx_qdrant:/qdrant/storage
+
+volumes:
+  codedevx_pg:
+  codedevx_qdrant:
