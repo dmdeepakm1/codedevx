@@ -82,6 +82,74 @@ Smoke test:
 3. Run the index command again.
 4. Verify only changed files/chunks are processed.
 
+## V1 acceptance milestone — architecture to implementation plan
+
+V1 deliberately supports this as a **human-gated assisted flow** without Neo4j or an autonomous agent:
+
+```text
+2-3 related repositories
++ architecture Markdown
++ one requirement
+        ↓
+current architecture
+        ↓
+impact analysis
+        ↓
+candidate HLD
+        ↓
+human approval
+        ↓
+candidate LLD
+        ↓
+human approval
+        ↓
+implementation plan
+        ↓
+human approval before code changes
+```
+
+Markdown knowledge can be indexed in V1 because code and knowledge share the vector store:
+
+```bash
+codedevx knowledge-add sample-platform /absolute/path/to/knowledge
+```
+
+Save a requirement locally, or pass its text directly. Run each stage separately:
+
+```bash
+codedevx design sample-platform current-architecture "Add validation to the product workflow"
+codedevx design sample-platform impact "Add validation to the product workflow"
+codedevx design sample-platform hld "Add validation to the product workflow"
+```
+
+Review the HLD. Only after approval, supply the approved artifact/decision to the next stage:
+
+```bash
+codedevx design sample-platform lld "Add validation to the product workflow" \
+  --approved-context "HLD approved. <paste or reference the approved design decisions>"
+
+codedevx design sample-platform plan "Add validation to the product workflow" \
+  --approved-context "HLD and LLD approved. <paste or reference approved decisions>"
+```
+
+The `design` command supports:
+
+```text
+current-architecture
+impact
+hld
+lld
+plan
+```
+
+V1 does not persist approval state. The user explicitly supplies approved prior context. This keeps V1 simple and makes it impossible for CodeDevX to silently promote its own candidate design to an approved artifact.
+
+### What V1 can and cannot infer
+
+V1 can use semantic retrieval across indexed code and Markdown to produce evidence-grounded current-state descriptions and candidate designs.
+
+It does **not** yet have AST/Tree-sitter cross-repository relationship extraction. Therefore exact call graphs, inheritance, API-to-database tracing and complete impact analysis must be treated as incomplete unless retrieved evidence directly supports them. Those capabilities belong to the intelligence improvements planned after the V1 milestone.
+
 ## V2 — knowledge, hybrid RAG, Ollama and MCP
 
 Set:
