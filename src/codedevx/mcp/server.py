@@ -1,7 +1,7 @@
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from codedevx.retrieval.hybrid import HybridRetriever
 
-mcp=FastMCP("CodeDevX")
+mcp=MCPServer("CodeDevX")
 
 @mcp.tool()
 def search_engineering_knowledge(project_id:str,query:str,limit:int=12)->dict:
