@@ -34,9 +34,6 @@ def index(project_id: str):
 def ask(project_id: str, question: str, provider: str="openai"):
     typer.echo(EngineeringAgent().ask(project_id,question,provider))
 
-if __name__ == "__main__":
-    app()
-
 
 @app.command("version")
 def version():
@@ -47,3 +44,6 @@ def knowledge_add(project_id: str, path: str):
     chunks=load_markdown(project_id,path)
     QdrantCodeStore().upsert_knowledge(chunks)
     typer.echo(f"Indexed {len(chunks)} knowledge chunks for {project_id}")
+
+if __name__ == "__main__":
+    app()
