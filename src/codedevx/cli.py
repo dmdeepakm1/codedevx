@@ -8,6 +8,7 @@ from codedevx.agent import EngineeringAgent
 from codedevx.knowledge.markdown import load_markdown
 from codedevx.vector.qdrant_store import QdrantCodeStore
 from codedevx.config import settings
+from codedevx.design import DesignAssistant, DesignStage
 
 app=typer.Typer(no_args_is_help=True)
 
@@ -33,6 +34,18 @@ def index(project_id: str):
 @app.command("ask")
 def ask(project_id: str, question: str, provider: str="openai"):
     typer.echo(EngineeringAgent().ask(project_id,question,provider))
+
+
+@app.command("design")
+def design(
+    project_id: str,
+    stage: DesignStage,
+    requirement: str,
+    approved_context: str="",
+    provider: str="openai",
+):
+    """Run one evidence-grounded, human-gated design stage."""
+    typer.echo(DesignAssistant().run(project_id,stage,requirement,approved_context,provider))
 
 
 @app.command("version")
