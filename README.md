@@ -65,6 +65,12 @@ These are extension points, not capabilities that this README claims already wor
 
 ---
 
+## Architecture guides
+
+- [AI-DLC integration](docs/AIDLC_INTEGRATION.md) — how CodeDevX supplies engineering context to a spec-driven AI-DLC workflow.
+- [Multi-team / multi-project architecture](docs/MULTI_TEAM_MULTI_PROJECT_ARCHITECTURE.md) — target workspace, team, project-area, repository-membership and shared-repository model.
+- [Integrated AI-DLC + MCP architecture](docs/INTEGRATION_ARCHITECTURE.md) — provenance-aware relationships, human approval boundaries and external Jira/Confluence MCP integration.
+
 # Architecture
 
 ## Target platform architecture
