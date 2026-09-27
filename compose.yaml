@@ -12,7 +12,7 @@ services:
     ports: ["6333:6333","6334:6334"]
     volumes: [codedevx_qdrant:/qdrant/storage]
   neo4j:
-    image: docker.io/library/neo4j:2026.08.2
+    image: docker.io/library/neo4j:2026.09.0
     environment:
       NEO4J_AUTH: neo4j/codedevx-local
     ports: ["7474:7474","7687:7687"]
