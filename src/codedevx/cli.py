@@ -5,6 +5,9 @@ from codedevx.domain import Repository, RepoKind
 from codedevx.storage.sql import add_project, add_repo, init_db
 from codedevx.indexer import ProjectIndexer
 from codedevx.agent import EngineeringAgent
+from codedevx.knowledge.markdown import load_markdown
+from codedevx.vector.qdrant_store import QdrantCodeStore
+from codedevx.config import settings
 
 app=typer.Typer(no_args_is_help=True)
 
@@ -33,3 +36,14 @@ def ask(project_id: str, question: str, provider: str="openai"):
 
 if __name__ == "__main__":
     app()
+
+
+@app.command("version")
+def version():
+    typer.echo(f"CodeDevX runtime profile: V{settings.version}")
+
+@app.command("knowledge-add")
+def knowledge_add(project_id: str, path: str):
+    chunks=load_markdown(project_id,path)
+    QdrantCodeStore().upsert_knowledge(chunks)
+    typer.echo(f"Indexed {len(chunks)} knowledge chunks for {project_id}")
