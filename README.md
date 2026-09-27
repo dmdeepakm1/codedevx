@@ -319,7 +319,7 @@ Vector retrieval is useful for questions such as:
 
 - "Where is phone-number validation handled?"
 - "Find documentation describing merge behavior."
-- "Which code looks related to Golden Record processing?"
+- "Which code looks related to canonical record processing?"
 
 Graph retrieval becomes important for questions such as:
 
@@ -492,27 +492,27 @@ Never commit your real `.env`.
 Register a project:
 
 ```bash
-codedevx project-add cx360
+codedevx project-add commerce-platform
 ```
 
 Register multiple repositories:
 
 ```bash
-codedevx repo-add cx360 frontend /absolute/path/frontend frontend
-codedevx repo-add cx360 backend /absolute/path/backend backend
-codedevx repo-add cx360 shared /absolute/path/shared shared
+codedevx repo-add commerce-platform frontend /absolute/path/frontend frontend
+codedevx repo-add commerce-platform backend /absolute/path/backend backend
+codedevx repo-add commerce-platform shared /absolute/path/shared shared
 ```
 
 Index:
 
 ```bash
-codedevx index cx360
+codedevx index commerce-platform
 ```
 
 Ask:
 
 ```bash
-codedevx ask cx360 "Where is product validation implemented?"
+codedevx ask commerce-platform "Where is product validation implemented?"
 ```
 
 ---
@@ -534,7 +534,7 @@ CODEDEVX_GRAPH_ENABLED=true
 Add Markdown knowledge:
 
 ```bash
-codedevx knowledge-add cx360 /absolute/path/to/knowledge
+codedevx knowledge-add commerce-platform /absolute/path/to/knowledge
 ```
 
 This directory can contain exported architecture notes, ADRs, runbooks and other Markdown documentation.
@@ -542,13 +542,13 @@ This directory can contain exported architecture notes, ADRs, runbooks and other
 Ask using OpenAI:
 
 ```bash
-codedevx ask cx360 "Explain the design and show the relevant code"
+codedevx ask commerce-platform "Explain the design and show the relevant code"
 ```
 
 Ask using Ollama:
 
 ```bash
-codedevx ask cx360 "Explain the design and show the relevant code" --provider ollama
+codedevx ask commerce-platform "Explain the design and show the relevant code" --provider ollama
 ```
 
 Before using Ollama, install/start Ollama separately and pull a model available in your Ollama installation. Set `CODEDEVX_OLLAMA_MODEL` to the exact installed model identifier.
@@ -682,7 +682,7 @@ This is a baseline—not a complete sandbox. For serious agentic coding:
 The long-term system should be able to answer questions such as:
 
 ```text
-"How does GRM merge work?"
+"How does Record Management merge work?"
 
 "Which repositories implement this capability?"
 
