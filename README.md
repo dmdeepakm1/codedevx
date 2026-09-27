@@ -70,6 +70,8 @@ These are extension points, not capabilities that this README claims already wor
 - [AI-DLC integration](docs/AIDLC_INTEGRATION.md) — how CodeDevX supplies engineering context to a spec-driven AI-DLC workflow.
 - [Multi-team / multi-project architecture](docs/MULTI_TEAM_MULTI_PROJECT_ARCHITECTURE.md) — target workspace, team, project-area, repository-membership and shared-repository model.
 - [Integrated AI-DLC + MCP architecture](docs/INTEGRATION_ARCHITECTURE.md) — provenance-aware relationships, human approval boundaries and external Jira/Confluence MCP integration.
+- [Local setup — V1, V2 and V3](docs/LOCAL_SETUP_V1_V2_V3.md) — prerequisites, installation, configuration and smoke tests.
+- [Jira → Design → Code workflow](docs/JIRA_TO_DESIGN_TO_CODE_WORKFLOW.md) — reverse engineering, HLD/LLD, human approval gates and implementation flow.
 
 # Architecture
 
