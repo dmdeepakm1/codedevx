@@ -1,10 +1,9 @@
-"""Cheap repository discovery and optional, validated codedevx.yaml hints."""
+"""Cheap repository discovery and optional, validated Markdown spec hints."""
+import re
 from collections import Counter
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
-
-import yaml
 
 from codedevx.analyzers.simple import IGNORE_PARTS, LANG
 from codedevx.git import tracked_files
@@ -27,26 +26,43 @@ class RepositoryProfile:
                 "exclude": list(self.exclude), "warnings": list(self.warnings)}
 
 
-def _strings(value, label: str) -> tuple[str, ...]:
-    if value is None:
-        return ()
-    if not isinstance(value, list) or any(not isinstance(v, str) or not v.strip() for v in value):
-        raise ValueError(f"{label} must be a list of nonempty strings")
-    return tuple(dict.fromkeys(value))
+FIELDS = {"version", "name", "languages", "frameworks", "build tool", "exclude"}
+
+
+def read_spec(root: Path) -> dict[str, str]:
+    """Parse a small metadata section; prose outside it remains free-form."""
+    spec_path = root / "codedevx.spec.md"
+    if not spec_path.is_file():
+        return {}
+    content = spec_path.read_text(encoding="utf-8")
+    match = re.search(r"(?mi)^## CodeDevX metadata\s*$", content)
+    if not match:
+        raise ValueError("codedevx.spec.md requires a '## CodeDevX metadata' section")
+    section = re.split(r"(?m)^##?\s+", content[match.end():], maxsplit=1)[0]
+    result = {}
+    for line in section.splitlines():
+        if not line.strip() or line.lstrip().startswith("<!--"):
+            continue
+        item = re.fullmatch(r"\s*-\s*([^:]+):\s*(.*?)\s*", line)
+        if not item:
+            raise ValueError(f"Invalid metadata line: {line}")
+        key, value = item.group(1).strip().lower(), item.group(2).strip()
+        if key not in FIELDS or key in result or not value:
+            raise ValueError(f"Unknown, duplicate or empty CodeDevX metadata field: {key}")
+        result[key] = value
+    if result.get("version") != "1":
+        raise ValueError("codedevx.spec.md requires '- Version: 1'")
+    return result
+
+
+def _list(value: str) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(part.strip() for part in value.split(",") if part.strip()))
 
 
 def load_profile(path: str, name: str) -> RepositoryProfile:
     root = Path(path)
-    spec_path = root / "codedevx.yaml"
-    spec = yaml.safe_load(spec_path.read_text(encoding="utf-8")) if spec_path.is_file() else {}
-    if not isinstance(spec, dict) or spec.get("version", 1) != 1:
-        raise ValueError("codedevx.yaml must be a mapping with version: 1")
-    technology = spec.get("technology", {})
-    analysis = spec.get("analysis", {})
-    repository = spec.get("repository", {})
-    if any(not isinstance(x, dict) for x in (technology, analysis, repository)):
-        raise ValueError("repository, technology and analysis must be mappings")
-    excludes = _strings(analysis.get("exclude"), "analysis.exclude")
+    spec = read_spec(root)
+    excludes = _list(spec.get("exclude", ""))
     paths = [p for p in tracked_files(path) if not any(part in IGNORE_PARTS for part in Path(p).parts)
              and not any(fnmatch(p, pattern) or fnmatch(Path(p).name, pattern) for pattern in excludes)]
     counts = Counter(LANGUAGES[LANG[Path(p).suffix.lower()]] for p in paths
@@ -70,14 +86,11 @@ def load_profile(path: str, name: str) -> RepositoryProfile:
     if "package.json" in files:
         package = (root / "package.json").read_text(encoding="utf-8", errors="replace")[:100_000].lower()
         frameworks.extend(x for x in ("angular", "react", "next", "vue") if f'"@{x}/' in package or f'"{x}"' in package or (x == "next" and '"next"' in package))
-    hints = _strings(technology.get("languages"), "technology.languages")
-    framework_hints = _strings(technology.get("frameworks"), "technology.frameworks")
-    build_spec = technology.get("build", {})
-    if not isinstance(build_spec, dict) or ("tool" in build_spec and not isinstance(build_spec["tool"], str)):
-        raise ValueError("technology.build.tool must be a string")
-    build_hint = (build_spec["tool"],) if build_spec.get("tool") else ()
+    hints = _list(spec.get("languages", ""))
+    framework_hints = _list(spec.get("frameworks", ""))
+    build_hint = (spec["build tool"],) if "build tool" in spec else ()
     warnings = [f"Language hint {x!r} differs from detected languages {detected}" for x in hints if detected and x not in detected]
     warnings += [f"Build hint {x!r} differs from detected tools {tuple(build)}" for x in build_hint if build and x not in build]
-    return RepositoryProfile(repository.get("name") or name, tuple(dict.fromkeys((*detected, *hints))),
+    return RepositoryProfile(spec.get("name") or name, tuple(dict.fromkeys((*detected, *hints))),
                              tuple(dict.fromkeys((*frameworks, *framework_hints))),
                              tuple(dict.fromkeys((*build, *build_hint))), excludes, tuple(warnings))

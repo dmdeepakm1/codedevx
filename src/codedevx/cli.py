@@ -1,16 +1,17 @@
 import json
 from pathlib import Path
+
 import typer
-from codedevx.domain import Repository, RepoKind
-from codedevx.storage.sql import add_project, add_repo, init_db
-from codedevx.indexer import ProjectIndexer
+
 from codedevx.agent import EngineeringAgent
-from codedevx.knowledge.markdown import load_markdown
-from codedevx.vector.qdrant_store import QdrantCodeStore
 from codedevx.config import settings
 from codedevx.design import DesignAssistant, DesignStage
+from codedevx.domain import RepoKind, Repository
+from codedevx.indexer import ProjectIndexer
+from codedevx.knowledge.markdown import load_markdown
 from codedevx.repository_profile import load_profile
-from codedevx.storage.sql import repos_for_project
+from codedevx.storage.sql import add_project, add_repo, init_db, repos_for_project
+from codedevx.vector.qdrant_store import QdrantCodeStore
 
 app=typer.Typer(no_args_is_help=True)
 
@@ -30,7 +31,7 @@ def repo_add(project_id: str, repo_id: str, path: str, kind: RepoKind=RepoKind.U
 
 @app.command("repo-profile")
 def repo_profile(project_id: str):
-    """Show detected technology and optional codedevx.yaml hints."""
+    """Show detected technology and optional codedevx.spec.md hints."""
     typer.echo(json.dumps({repo.id:load_profile(repo.path,repo.id).as_dict() for repo in repos_for_project(project_id)},indent=2))
 
 @app.command("index")

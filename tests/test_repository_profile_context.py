@@ -3,14 +3,14 @@ import subprocess
 import pytest
 
 from codedevx.context import ContextBudget, estimate_tokens, evidence_context
-from codedevx.repository_profile import load_profile
+from codedevx.repository_profile import load_profile, read_spec
 
 
 def test_detects_repo_and_flags_incorrect_hints(tmp_path):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     (tmp_path / "pom.xml").write_text("<dependency>spring-boot-starter-web</dependency>")
     (tmp_path / "Service.java").write_text("class Service {}")
-    (tmp_path / "codedevx.yaml").write_text("version: 1\ntechnology:\n  languages: [python]\n  build:\n    tool: gradle\n")
+    (tmp_path / "codedevx.spec.md").write_text("# Service\n\n## CodeDevX metadata\n- Version: 1\n- Languages: python\n- Build tool: gradle\n\n## Architecture\nHandles requests.\n")
     subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
     profile = load_profile(str(tmp_path), "service")
     assert profile.languages == ("java", "python")
@@ -21,7 +21,7 @@ def test_detects_repo_and_flags_incorrect_hints(tmp_path):
 
 def test_invalid_spec_is_rejected(tmp_path):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
-    (tmp_path / "codedevx.yaml").write_text("version: 2")
+    (tmp_path / "codedevx.spec.md").write_text("## CodeDevX metadata\n- Version: 2")
     with pytest.raises(ValueError):
         load_profile(str(tmp_path), "repo")
 
@@ -33,3 +33,13 @@ def test_context_ranks_and_caps_evidence():
     result = evidence_context(hits, [], [], ContextBudget(max_tokens=200, source_code=160), reserved_tokens=30)
     assert estimate_tokens(result) <= 170
     assert result.index("a1.java") < result.index("a2.java") if "a2.java" in result else "a1.java" in result
+
+
+def test_markdown_spec_keeps_prose_out_of_metadata(tmp_path):
+    (tmp_path / "codedevx.spec.md").write_text(
+        "# Service\n\n## CodeDevX metadata\n- Version: 1\n- Languages: java, kotlin\n"
+        "- Exclude: generated/**, target/**\n\n## Architecture\n- Entry point: API\n"
+    )
+    assert read_spec(tmp_path) == {
+        "version": "1", "languages": "java, kotlin", "exclude": "generated/**, target/**"
+    }
