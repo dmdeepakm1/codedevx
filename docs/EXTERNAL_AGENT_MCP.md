@@ -57,3 +57,66 @@ Exact configuration format differs by Claude Code, Kiro, Copilot and IDE version
 ## Security
 
 Never commit real API keys, Jira/Confluence tokens, GitHub tokens, customer data exports, or a populated `.env`.
+
+
+## AI-DLC harness compatibility
+
+AI-DLC already implements the harness-neutral pattern CodeDevX needs for workflow execution:
+
+```text
+Claude / Kiro / Copilot / Codex / Cursor / opencode
+                       │
+                       ▼
+                 AI-DLC harness
+                       │
+                       ▼
+               AI-DLC workflow core
+                       │
+                       ├── clarification
+                       ├── approvals
+                       ├── stage state
+                       └── generated artifacts
+                       │
+                       ▼
+                 CodeDevX MCP
+                       │
+                       └── engineering evidence
+```
+
+Recommended integration:
+
+- Let AI-DLC own workflow stages, human gates, questions, lifecycle state and harness-specific provider/model setup.
+- Let CodeDevX own multi-repository indexing, retrieval, architecture/code evidence, provenance and impact context.
+- Do not duplicate AI-DLC harness configuration inside CodeDevX.
+- Configure the selected harness using AI-DLC, then make CodeDevX MCP available to that harness as an additional MCP server.
+
+Examples:
+
+```bash
+aidlc config --harness claude
+aidlc config --harness kiro
+aidlc config --harness kiro-ide
+aidlc config --harness copilot
+```
+
+Model/provider authentication remains with the harness. CodeDevX needs only credentials for services it directly calls, such as an embedding provider or optional direct LLM provider.
+
+The target user flow becomes:
+
+```text
+/aidlc <requirement>
+   ↓
+AI-DLC chooses workflow and asks clarification questions
+   ↓
+AI-DLC requests grounded engineering context
+   ↓
+CodeDevX MCP searches relevant repos + knowledge
+   ↓
+AI-DLC produces candidate architecture/impact/HLD/LLD/plan
+   ↓
+human approval gates
+   ↓
+implementation through the active harness
+```
+
+This keeps CodeDevX compatible with future harnesses without rebuilding the knowledge platform.
