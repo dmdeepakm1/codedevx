@@ -43,22 +43,32 @@ def index(project_id: str):
 def ask(project_id: str, question: str, provider: str="openai"):
     typer.echo(EngineeringAgent().ask(project_id,question,provider))
 
-
 @app.command("design")
-def design(
-    project_id: str,
-    stage: DesignStage,
-    requirement: str,
-    approved_context: str="",
-    provider: str="openai",
-):
+def design(project_id: str, stage: DesignStage, requirement: str, approved_context: str="", provider: str="openai"):
     """Run one evidence-grounded, human-gated design stage."""
     typer.echo(DesignAssistant().run(project_id,stage,requirement,approved_context,provider))
-
 
 @app.command("version")
 def version():
     typer.echo(f"CodeDevX runtime profile: V{settings.version}")
+
+@app.command("doctor")
+def doctor():
+    """Show configuration readiness without printing secrets."""
+    import os
+    report={
+        "version":settings.version,
+        "embedding_provider":settings.embedding_provider,
+        "generation":{
+            "openai":{"configured":bool(settings.openai_api_key),"model":settings.openai_model},
+            "anthropic":{"configured":bool(settings.anthropic_api_key),"model":settings.anthropic_model},
+            "ollama":{"url":settings.ollama_url,"model":settings.ollama_model},
+        },
+        "mcp":{"command":"codedevx-mcp","external_client_key_required_in_codedevx":False},
+        "services":{"qdrant":settings.qdrant_url,"neo4j_enabled":settings.graph_enabled},
+        "env_file_present":os.path.exists(".env"),
+    }
+    typer.echo(json.dumps(report,indent=2))
 
 @app.command("knowledge-add")
 def knowledge_add(project_id: str, path: str):
