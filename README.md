@@ -387,6 +387,21 @@ This allows a task to use local Ollama when appropriate and another provider for
 
 ---
 
+# AI-DLC harness integration
+
+For structured delivery workflows, use AI-DLC as the harness-neutral lifecycle engine and CodeDevX as the engineering-evidence layer. AI-DLC already supports Claude Code, Kiro CLI/IDE, Codex, Cursor, opencode and GitHub Copilot through thin harness integrations. Configure the harness with AI-DLC, then expose CodeDevX MCP to that harness.
+
+```text
+AI-DLC harness
+   │
+   ├── workflow/gates/state
+   ▼
+CodeDevX MCP
+   └── code + knowledge evidence
+```
+
+Do not duplicate provider/model or harness setup inside CodeDevX. See `docs/EXTERNAL_AGENT_MCP.md`.
+
 # MCP architecture
 
 CodeDevX includes an MCP server entry point:
