@@ -1,17 +1,16 @@
 from qdrant_client import QdrantClient, models
-from openai import OpenAI
 from codedevx.config import settings
 from codedevx.domain import CodeChunk
+from codedevx.embeddings.router import EmbeddingRouter
 
 class QdrantCodeStore:
     def __init__(self):
         self.q = QdrantClient(url=settings.qdrant_url)
-        self.openai = OpenAI(api_key=settings.openai_api_key)
+        self.embedder = EmbeddingRouter().provider()
         self.collection = settings.qdrant_collection
 
     def _embed(self, texts: list[str]) -> list[list[float]]:
-        r = self.openai.embeddings.create(model=settings.embedding_model, input=texts)
-        return [x.embedding for x in r.data]
+        return self.embedder.embed(texts)
 
     def _ensure(self, dim: int):
         if not self.q.collection_exists(self.collection):
@@ -34,7 +33,6 @@ class QdrantCodeStore:
             return []
         hits=self.q.query_points(collection_name=self.collection,query=vector,query_filter=models.Filter(must=[models.FieldCondition(key="project_id",match=models.MatchValue(value=project_id))]),limit=limit,with_payload=True).points
         return [{"score":h.score,**(h.payload or {})} for h in hits]
-
 
     def upsert_knowledge(self, chunks):
         if not chunks:
